@@ -1,10 +1,8 @@
 language: java
 
-sudo: false
-
 install: "./.travis_install.sh"
 
-script: mvn test
+script: mvn test -Dtest='fr.inria.astor.test.repair.evaluation.JGenProgTest'
 
 jdk:
   - oraclejdk7

@@ -46,7 +46,7 @@ public class JGenProgTest extends BaseEvolutionaryTest {
 		AstorMain main1 = new AstorMain();
 		String[] args = new String[] { "-bug280"};
 		main1.main(args);
-		validatePatchExistence(out + File.separator + "AstorMain-math_85/");
+		validatePatchExistence(out + File.separator + "AstorMain-Math-issue-280/");
 	}
 	
 	//@Test
