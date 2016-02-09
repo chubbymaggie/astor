@@ -17,6 +17,7 @@ import fr.inria.astor.core.setup.ConfigurationProperties;
 import fr.inria.astor.core.setup.ProjectConfiguration;
 import fr.inria.astor.core.setup.ProjectRepairFacade;
 import fr.inria.astor.core.setup.RandomManager;
+import fr.inria.main.evolution.AstorMain;
 import spoon.reflect.factory.Factory;
 
 /**
@@ -178,7 +179,8 @@ public abstract class AbstractMain {
     }
 
 	public boolean processArguments(String[] args) throws Exception {
-		
+		log.info("command line arguments: " + Arrays.toString(args).replace(",", " "));
+
 		ConfigurationProperties.clear();
 		
 		CommandLine cmd = null;
