@@ -6,14 +6,14 @@ package fr.inria.astor.core.setup;
  *
  */
 public enum ProjectPropertiesEnum {
-	inDir,
-	outDir,
-	testPath,
+	workingDirRoot,
+	workingDirSource,
+	workingDirBytecode,
+	testDirSrc,
 	originalDirSrc,
 	originalAppBinDir,
 	originalTestBinDir,
 	dependencies,
-	libPath,
 	originalProjectRootDir,
 	dataFolder ,
 	failingTestCases,

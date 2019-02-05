@@ -1,42 +1,27 @@
 package fr.inria.astor.core.manipulation;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.Logger;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import fr.inria.astor.core.entities.ModificationInstance;
-import fr.inria.astor.core.entities.SuspiciousModificationPoint;
+import fr.inria.astor.core.entities.OperatorInstance;
 import fr.inria.astor.core.entities.ProgramVariant;
-import fr.inria.astor.core.manipulation.bytecode.compiler.SpoonClassCompiler;
-import fr.inria.astor.core.manipulation.bytecode.entities.CompilationResult;
+import fr.inria.astor.core.manipulation.bytecode.OutputWritter;
 import fr.inria.astor.core.manipulation.sourcecode.ROOTTYPE;
 import fr.inria.astor.core.setup.ConfigurationProperties;
 import spoon.OutputType;
+import spoon.SpoonModelBuilder.InputType;
+import spoon.compiler.Environment;
 import spoon.reflect.code.CtCodeElement;
 import spoon.reflect.cu.SourcePosition;
+import spoon.reflect.cu.position.NoSourcePosition;
 import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtElement;
-import spoon.reflect.declaration.CtInterface;
 import spoon.reflect.declaration.CtType;
-import spoon.reflect.declaration.ModifierKind;
 import spoon.reflect.factory.Factory;
 import spoon.reflect.factory.FactoryImpl;
 import spoon.support.DefaultCoreFactory;
@@ -57,100 +42,82 @@ public class MutationSupporter {
 
 	private Logger logger = Logger.getLogger(Thread.currentThread().getName());
 
-	/**
-	 * 
-	 */
-	private SpoonClassCompiler spoonClassCompiler = null;
+	private OutputWritter output;
 
-	/**
-	 * Spoon model generator
-	 */
-	private JDTBasedSpoonCompiler jdtSpoonModelBuilder = null;
-	
-	private List<CtClass> classes = new ArrayList<>();
-	private List<CtClass> testClasses = new ArrayList<>();
-
-	
 	public static Factory factory;
 
-
 	public MutationSupporter() {
-		this(getFactory());
+		this(getFactory(), getFactory().getEnvironment());
 	}
 
-	
-	public MutationSupporter(Factory factory) {
+	public MutationSupporter(Factory factory, Environment environment) {
 		this.factory = factory;
-		spoonClassCompiler = new SpoonClassCompiler(factory);
 		this.currentSupporter = this;
+		this.output = new OutputWritter(factory);
 	}
 
 	public void buildModel(String srcPathToBuild, String[] classpath) {
 
+		buildModel(srcPathToBuild, null, classpath);
+	}
+
+	public void buildModel(String srcPathToBuild, String bytecodePathToBuild, String[] classpath) {
+		JDTBasedSpoonCompiler jdtSpoonModelBuilder = null;
 		logger.info("building model: " + srcPathToBuild + ", compliance level: "
 				+ factory.getEnvironment().getComplianceLevel());
+		factory.getEnvironment().setCommentEnabled(false);
+		factory.getEnvironment().setNoClasspath(false);
+		factory.getEnvironment().setPreserveLineNumbers(ConfigurationProperties.getPropertyBool("preservelinenumbers"));
+
 		jdtSpoonModelBuilder = new JDTBasedSpoonCompiler(factory);
-		jdtSpoonModelBuilder.addInputSource(new File(srcPathToBuild));
-		//Original
-		//jdtSpoonModelBuilder.setOutputDirectory(new File(srcPathToBuild));
-		jdtSpoonModelBuilder.setSourceOutputDirectory(new File(srcPathToBuild));
-		jdtSpoonModelBuilder.setSourceClasspath(classpath);
-		jdtSpoonModelBuilder.build();
-		jdtSpoonModelBuilder.generateProcessedSourceFiles(OutputType.COMPILATION_UNITS);
 
-	}
-
-	/**
-	 * Load the class name TODO TO BE MODIFIED
-	 * 
-	 * @param classname
-	 * @return
-	 */
-	public Class loadInNewThread(URL[] cp, String classname) {
-		createClassLoadInCurrentThread(cp);
-		return loadInCurrentThread(classname);
-	}
-
-	public void createClassLoadInCurrentThread(URL[] cp) {
-		URLClassLoader cl = new URLClassLoader(cp);
-		Thread.currentThread().setContextClassLoader(cl);
-	}
-
-	public Class loadInCurrentThread(String className) {
-		try {
-			ClassLoader loader = Thread.currentThread().getContextClassLoader();
-			Class loadedclass = loader.loadClass(className);
-			return loadedclass;
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+		String[] sources = srcPathToBuild.split(File.pathSeparator);
+		for (String src : sources) {
+			if (!src.trim().isEmpty())
+				jdtSpoonModelBuilder.addInputSource(new File(src));
 		}
+		logger.info("Classpath for building SpoonModel " + Arrays.toString(classpath));
+		jdtSpoonModelBuilder.setSourceClasspath(classpath);
+
+		jdtSpoonModelBuilder.build();
+
+		if (ConfigurationProperties.getPropertyBool("savespoonmodelondisk")) {
+			factory.getEnvironment().setSourceOutputDirectory(new File(srcPathToBuild));
+			jdtSpoonModelBuilder.generateProcessedSourceFiles(OutputType.COMPILATION_UNITS);
+			jdtSpoonModelBuilder.setBinaryOutputDirectory(new File(bytecodePathToBuild));
+			jdtSpoonModelBuilder.compile(InputType.CTTYPES);
+		}
+
 	}
 
 	/**
-	 * Saves Java File and Compiles it The Program Variant as well as the rest
-	 * of the project is saved on disk. Not any more: Additionally, the compiled
-	 * class are saved it on disk. Finally, the current Thread has a reference
-	 * to a class loader with the ProgramVariant
+	 * Saves Java File and Compiles it The Program Variant as well as the rest of
+	 * the project is saved on disk. Not any more: Additionally, the compiled class
+	 * are saved it on disk. Finally, the current Thread has a reference to a class
+	 * loader with the ProgramVariant
 	 * 
 	 * @param instance
 	 * @throws Exception
 	 */
 	public void saveSourceCodeOnDiskProgramVariant(ProgramVariant instance, String srcOutput) throws Exception {
 		// Set up the dir where we save the generated output
-		this.getSpoonClassCompiler().updateOutput(srcOutput);
+		this.output.updateOutput(srcOutput);
+		Collection<CtClass> _classes = new ArrayList<>();
+		// We save only the classes affected by operations.
+		List<OperatorInstance> opin = instance.getAllOperations();
+		for (OperatorInstance operatorInstance : opin) {
+			CtClass _classopin = operatorInstance.getModificationPoint().getCtClass();
+			if (_classopin != null && !_classes.contains(_classopin))
+				_classes.add(_classopin);
+		}
+		if (_classes.isEmpty()) {
+			_classes = instance.getBuiltClasses().values();
+		}
 
-		// For each class contemplated for the program variant,
 		for (CtClass ctclass : instance.getBuiltClasses().values()) {
 			this.generateSourceCodeFromCtClass(ctclass);
 		}
 
-	}
-
-	public CompilationResult compileOnMemoryProgramVariant(ProgramVariant instance, URL[] cp) {
-		List<CtClass> ctClasses = new ArrayList<CtClass>(instance.getBuiltClasses().values());
-		CompilationResult compilation2 = spoonClassCompiler.compileOnMemory(ctClasses, cp);
-
-		return compilation2;
 	}
 
 	/**
@@ -165,193 +132,76 @@ public class MutationSupporter {
 		SourcePosition sp = type.getPosition();
 		type.setPosition(null);
 
-		if (spoonClassCompiler == null || spoonClassCompiler.getJavaPrinter() == null) {
+		if (output == null || output.getJavaPrinter() == null) {
 			throw new IllegalArgumentException("Spoon compiler must be initialized");
 		}
-		spoonClassCompiler.saveSourceCode((CtClass) type);
-
+		output.saveSourceCode((CtClass) type);
 		// --
 		// End Workarround
 		type.setPosition(sp);
 
 	}
 
-
-	
-
-	/**
-	 * @return the class with the given qualified name.
-	 */
-	@SuppressWarnings("unchecked")
-	public <T> Class<T> load(String binDirPath, String qualifiedName) {
-		try {
-			URL url = new File(binDirPath).toURI().toURL();
-			URLClassLoader cl = new URLClassLoader(new URL[] { url });
-			Thread.currentThread().setContextClassLoader(cl);
-			return (Class<T>) (cl.loadClass(qualifiedName));
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public <T> Class<T> loadInCurrent(String qualifiedName) {
-
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		try {
-			return (Class<T>) (cl.loadClass(qualifiedName));
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	
-
-	public SpoonClassCompiler getSpoonClassCompiler() {
-		return this.spoonClassCompiler;
-	}
-
 	public static Factory getFactory() {
-		
+
 		if (factory == null) {
 			factory = createFactory();
 			factory.getEnvironment().setLevel("OFF");
+			factory.getEnvironment().setSelfChecks(true);
+
 		}
 		return factory;
 	}
+
 	/**
 	 * Creates a new spoon factory.
+	 * 
 	 * @return
 	 */
-	public static Factory cleanFactory(){
+	public static Factory cleanFactory() {
 		factory = null;
 		return getFactory();
 	}
 
-	public Map<String, CtClass> getBuiltCtClasses() {
-		Map<String, CtClass> result = new HashMap<String, CtClass>();
-		List<CtType<?>> ct = factory.Class().getAll();
-		for (CtType<?> CtType : ct) {
-			if (CtType instanceof CtClass) {
-				result.put(CtType.getQualifiedName(), (CtClass) CtType);
-			}
-		}
-		return result;
-	}
-
-	public void saveSolutionData(ProgramVariant childVariant, String srcOutput, int generation) {
-		try {
-			Map<String, Integer> result = new HashMap<String, Integer>();
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-
-			Document root = dBuilder.newDocument();
-			Element rootElement = root.createElement("patch");
-			root.appendChild(rootElement);
-
-			for (int i = 1; i <= generation; i++) {
-				List<ModificationInstance> genOperationInstances = childVariant.getOperations().get(i);
-				if (genOperationInstances == null)
-					continue;
-
-				for (ModificationInstance genOperationInstance : genOperationInstances) {
-
-					Element op = root.createElement("operation");
-					rootElement.appendChild(op);
-
-					Attr attr_location = root.createAttribute("location");
-					attr_location.setValue(genOperationInstance.getModificationPoint().getCtClass().getQualifiedName());
-					op.setAttributeNode(attr_location);
-
-					if (genOperationInstance.getModificationPoint() instanceof SuspiciousModificationPoint) {
-						SuspiciousModificationPoint gs = (SuspiciousModificationPoint) genOperationInstance.getModificationPoint();
-						int line = gs.getSuspicious().getLineNumber();
-						Attr attr_line = root.createAttribute("line");
-						attr_line.setValue(Integer.toString(line));
-						op.setAttributeNode(attr_line);
-					}
-
-					Attr attr_gen = root.createAttribute("generation");
-					attr_gen.setValue(Integer.toString(i));
-					op.setAttributeNode(attr_gen);
-
-					Attr attr_type = root.createAttribute("type");
-					attr_type.setValue(genOperationInstance.getOperationApplied().toString());
-					op.setAttributeNode(attr_type);
-
-					Element original = root.createElement("original");
-					op.appendChild(original);
-					original.setTextContent(genOperationInstance.getOriginal().toString());
-
-					Element mod = root.createElement("modified");
-					op.appendChild(mod);
-
-					if (genOperationInstance.getModified() != null) {
-						mod.setTextContent(genOperationInstance.getModified().toString());
-						if (genOperationInstance.getIngredientScope() != null) {
-							Attr attr_ing = root.createAttribute("scope");
-							attr_ing.setValue(genOperationInstance.getIngredientScope().toString());
-							mod.setAttributeNode(attr_ing);
-						}
-					} else {
-						mod.setTextContent(genOperationInstance.getOriginal().toString());
-					}
-
-				}
-			}
-
-			// write the content into xml file
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			DOMSource source = new DOMSource(root);
-			// StreamResult result1 = new StreamResult(System.out);
-			StreamResult result1 = new StreamResult(new File(srcOutput + File.separator + "patch.xml"));
-
-			// Output to console for testing
-			// StreamResult result = new StreamResult(System.out);
-
-			// ----
-
-			transformer.transform(source, result1);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	public static final CtElement ROOT_ELEMENT = new ROOTTYPE();
-
 
 	public static CtCodeElement clone(CtCodeElement st) {
 		CtCodeElement cloned = factory.Core().clone(st);
-	
-		cloned.setParent(ROOT_ELEMENT);
 
+		// cloned.setParent(ROOT_ELEMENT);
+		cloned.setParent(st.getParent());
 		return cloned;
 	}
 
-
-	
 	private static Factory createFactory() {
-		StandardEnvironment env = new StandardEnvironment();
+		Environment env = getEnvironment();
 		Factory factory = new FactoryImpl(new DefaultCoreFactory(), env);
-		// environment initialization
+
+		return factory;
+	}
+
+	public static Environment getEnvironment() {
+		StandardEnvironment env = new StandardEnvironment();
+
 		env.setComplianceLevel(ConfigurationProperties.getPropertyInt("javacompliancelevel"));
 		env.setVerbose(false);
 		env.setDebug(true);
 		env.setTabulationSize(5);
 		env.useTabulations(true);
-		return factory;
-	}
-	
-	public List<CtClass> getClasses() {
-		return classes;
+		return env;
 	}
 
-
-	public List<CtClass> getTestClasses() {
-		return testClasses;
+	public OutputWritter getOutput() {
+		return output;
 	}
-	
+
+	public void setOutput(OutputWritter output) {
+		this.output = output;
+	}
+
+	public static void clearPosition(CtElement expCloned) {
+		expCloned.setPosition(new NoSourcePosition());
+		expCloned.getElements(e -> true).stream().forEach(e -> e.setPosition(new NoSourcePosition()));
+	}
+
 }

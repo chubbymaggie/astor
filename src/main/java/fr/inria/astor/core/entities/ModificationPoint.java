@@ -50,12 +50,12 @@ public class ModificationPoint {
 		return ctClass;
 	}
 
-	public void setClonedClass(CtClass clonedClass) {
+	public void setCtClass(CtClass clonedClass) {
 		this.ctClass = clonedClass;
 	}
 
 	public String toString() {
-		return "[" + codeElement.getClass().getSimpleName() + ", in " + ctClass.getSimpleName() + "]";
+		return "[" + codeElement.getClass().getSimpleName() + ", in " + ctClass.getQualifiedName()+ "]";
 	}
 
 	public List<CtVariable> getContextOfModificationPoint() {

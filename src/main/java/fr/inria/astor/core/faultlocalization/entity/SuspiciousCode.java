@@ -1,6 +1,10 @@
 package fr.inria.astor.core.faultlocalization.entity;
 
 import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Map;
+
+import fr.inria.astor.core.faultlocalization.gzoltar.TestCaseResult;
 
 /**
  * This entity represents a suspicious lines inside a class.
@@ -24,15 +28,26 @@ public class SuspiciousCode {
 	 */
 	double suspiciousValue;
 
+	String fileName;
+
+	/**
+	 * Key is the test identifier, value Numbers of time executed by that test.
+	 */
+	private Map<Integer, Integer> coverage = null;
+
+	protected List<TestCaseResult> coveredByTests = null;
+
 	public SuspiciousCode() {
 	}
 
-	public SuspiciousCode(String className, String methodName, int lineNumber, double susp) {
+	public SuspiciousCode(String className, String methodName, int lineNumber, double susp,
+			Map<Integer, Integer> frequency) {
 		super();
 		this.className = className;
 		this.methodName = methodName;
 		this.lineNumber = lineNumber;
 		this.suspiciousValue = susp;
+		this.coverage = frequency;
 	}
 
 	public SuspiciousCode(String className, String methodName, double susp) {
@@ -89,6 +104,30 @@ public class SuspiciousCode {
 	public String toString() {
 		return "Candidate [className=" + className + ", methodName=" + methodName + ", lineNumber=" + lineNumber
 				+ ", susp=" + suspiciousValue + "]";
+	}
+
+	public Map<Integer, Integer> getCoverage() {
+		return coverage;
+	}
+
+	public void setCoverage(Map<Integer, Integer> coverage) {
+		this.coverage = coverage;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public List<TestCaseResult> getCoveredByTests() {
+		return coveredByTests;
+	}
+
+	public void setCoveredByTests(List<TestCaseResult> coveredByTests) {
+		this.coveredByTests = coveredByTests;
 	}
 
 }

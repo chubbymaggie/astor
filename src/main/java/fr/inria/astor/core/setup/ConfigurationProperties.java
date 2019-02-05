@@ -43,7 +43,14 @@ public class ConfigurationProperties {
 		return properties.getProperty(key);
 	}
 
+	public static void setProperty(String key, String value) {
+		properties.setProperty(key, value);
+	}
+
 	public static Integer getPropertyInt(String key) {
+		if (properties.getProperty(key) == null) {
+			return 0;
+		}
 		return Integer.valueOf(properties.getProperty(key));
 	}
 

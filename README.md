@@ -1,117 +1,148 @@
-ASTOR
-=====
+ASTOR: A Program Repair Library for Java
+========================================
 
 [![Build Status](https://travis-ci.org/SpoonLabs/astor.svg?branch=master)](https://travis-ci.org/SpoonLabs/astor)
 
-If you use Astor, please cite this technical report:
+Astor is an automatic software repair framework in Java for Java, done by Inria, the University of Lille, the University of Valenciennes, and KTH Royal Institute of Technology. 
+Astor is an acronym standing for "Automatic Software Transformations fOr program Repair".
 
-Matias Martinez, Martin Monperrus. "ASTOR: Evolutionary Automatic Software Repair for Java". Technical Report hal-01075976, Inria; 2014. 
+If you use Astor for academic purposes, please cite the appropriate publication:
 
-    @techreport{hal-01075976,
-     TITLE = {{ASTOR: Evolutionary Automatic Software Repair for Java}},
-     AUTHOR = {Martinez, Matias and Monperrus, Martin},
-     URL = {https://hal.archives-ouvertes.fr/hal-01075976},
-     INSTITUTION = {{Inria}},
-     YEAR = {2014}
+Matias Martinez, Martin Monperrus, "[ASTOR: A Program Repair Library for Java](https://hal.archives-ouvertes.fr/hal-01321615/document)", in Proceedings of ISSTA, Demonstration Track, 2016.
+
+    @inproceedings{martinez:hal-01321615,
+     title = {ASTOR: A Program Repair Library for Java},
+     author = {Martinez, Matias and Monperrus, Martin},
+     booktitle = {Proceedings of ISSTA},
+     year = {2016},
+     doi = {10.1145/2931037.2948705},
     }
 
-Astor is an evolutionary Automatic Software Repair framework that contains implementation of state of the art repair approaches such as GenProg and Kali.
+The very first paper about Astor is [ASTOR: Evolutionary Automatic Software Repair for Java (Arxiv 1410.6651, 2014)](https://arxiv.org/abs/1410.6651).
 
+Contributing
+------------
 
-Getting started
+We do welcome bug fixes, features and new repair approaches as pull request. Welcome to Astor!
+
+[Contributors](https://github.com/SpoonLabs/astor/graphs/contributors):
+
+* Matias Martinez (University of Valenciennes) (project leader: matias.sebastian.martinez@gmail.com)
+* Martin Monperrus (KTH Royal Institute of Technology) (martin.monperrus@csc.kth.se)
+* Thomas Durieux (Inria)
+* Martin G. White (William and Mary)
+* Claire Le Goues (CMU)
+* Simon Urli (Inria)
+
+jGenProg
 -------
 
-Note that this project requires the use of **Java 1.7**; it does not build or does not run (on OS X 10.10.3) with Java 1.8. Please install a JDK 1.7 and configure Maven or your IDE to use it. Fill property jvm4testexecution in `src/main/resources/configuration.properties`.
+jGenProg is an implementation of GenProg. The experiments about jGenProg are described in:
 
-To compile using maven, first execute:
+* [Automatic Repair of Real Bugs in Java: A Large-Scale Experiment on the Defects4J Dataset](https://hal.archives-ouvertes.fr/hal-01387556/document) (Matias Martinez, Thomas Durieux, Romain Sommerard, Jifeng Xuan and Martin Monperrus), In Empirical Software Engineering, Springer Verlag, volume 22, 2017.
+* [ASTOR: A Program Repair Library for Java](https://hal.archives-ouvertes.fr/hal-01321615/document) (Matias Martinez, Martin Monperrus) , in Proceedings of ISSTA, Demonstration Track, 2016.
+* Open-science repository with jGenProg patches: <https://github.com/Spirals-Team/defects4j-repair/>
 
-    mvn clean
-    mvn compile
+jKali
+-----
 
-We recommend to remove all package-info.java files from the project to repair (You can use command: `find . -name "package-info.java" -type f -delete`).
+jGenProg is an implementation of Kali. The experiments about jKali are described in:
 
-We provide an implementation of GenProg repair algorithm called jGenProg.The class to run it is:
-
-    fr.inria.main.evolution.MainjGenProg
-
-After the execution of a repair attempt, Astor writes in the output folder (property `workingDirectory` in the mentioned file), a folder with all the variants that fulfill the goals i.e., repair the bugs.
-Each variant folder contains the files that Astor have analyzed (and eventually modified). Additionally, it contains a file called 'Patch.xml' that summarized all changes done in the variant.
-The summary of the execution is alsoprinted on the screen at the end of the execution. If there is at least one solution, it prints “Solution found” and then it lists the program variants that are solution i.e., they fixed versions of the program. Then, if you go to the folder to each of those variants, the file patch appears, which summarizes the changes done for repairing the bug. In other words, the file `patch.xml` is only present if the variant is a valid solution (fixes the failing test and no regression).
-If Astor does not find any solution in the execution, it prints at the screen something like “Not solution found”. 
+* [Automatic Repair of Real Bugs in Java: A Large-Scale Experiment on the Defects4J Dataset](https://hal.archives-ouvertes.fr/hal-01387556/document) (Matias Martinez, Thomas Durieux, Romain Sommerard, Jifeng Xuan and Martin Monperrus), In Empirical Software Engineering, Springer Verlag, volume 22, 2017.
+* [ASTOR: A Program Repair Library for Java](https://hal.archives-ouvertes.fr/hal-01321615/document) (Matias Martinez, Martin Monperrus) , in Proceedings of ISSTA, Demonstration Track, 2016.
+* Open-science repository with jKali patches: <https://github.com/Spirals-Team/defects4j-repair/>
 
 
-**jGenProg**
+jMutRepair
+----------
 
-We present an command line with the required arguments for executing jGenProg.  Optional arguments can find using option -help are listed below. They arguments can also be changed  in "configuration.properties".
+jMutRepair is an implementation of mutation-based repair. The experiments about jMutRepair are described in
 
-Minimum arguments:
+* [ASTOR: A Program Repair Library for Java](https://hal.archives-ouvertes.fr/hal-01321615/document) (Matias Martinez, Martin Monperrus), in Proceedings of ISSTA, Demonstration Track, 2016.
 
+* Open-science repository with jMutRepair patches: <https://github.com/SpoonLabs/astor-experiments/>
 
-    java fr.inria.main.evolution.MainjGenProg 
-      -srcjavafolder "source code folder"
-      -srctestfolder "test source code folder"
-      -binjavafolder "class folder" 
-      -bintestfolder "test class folder" 
+DeepRepair
+----------
 
-    
-Other options:
+DeepRepair is an extension of jGenProg leveraging code similarity. The experiments about DeepRepair are described in
 
-    -mode statement 
+* [Sorting and Transforming Program Repair Ingredients via Deep Learning Code Similarities](https://arxiv.org/pdf/1707.04742.pdf) (Martin White, Michele Tufano, Matias Martinez, Martin Monperrus and Denys Poshyvanyk), Arxiv 1707.04742, 2017.
+* Open-science repository with DeepRepair patches: <https://github.com/SpoonLabs/astor-experiments/>
 
-    -location "location of the project to repair" 
+Cardumen
+----------
 
-    -dependencies "folder with the dependencies of the application to repair" 
+Cardumen is a repair approach based on mined templates. The experiments about Cardumen are described in
 
-    -failing "failing test case>"
-    
-    -package "package to manipulate" (only the statements from this package are manipulated to find a patch)
+* [Ultra-Large Repair Search Space with Automatically Mined Templates: the Cardumen Mode of Astor ](https://arxiv.org/pdf/1712.03854v2), Proceedings of the 10th International Symposium on Search-Based Software Engineering, 2018
+* [Open-ended Exploration of the Program Repair Search Space with Mined Templates: the Next 8935 Patches for Defects4J](https://arxiv.org/pdf/1712.03854v1) (Martin Monperrus, Matias Martinez), Arxiv 1712.03854, 2017
+* Open-science repository with Cardumen patches: <https://github.com/SpoonLabs/astor-experiments/>
 
-    -jvm4testexecution "jdklocation"/java-1.7.0/bin/ 
+Usage
+------
 
-    -javacompliancelevel "compliance level of source code e.g. 5"
-
-    -stopfirst true 
-
-    -flthreshold "minimun suspicious value for fault localization e.g. 0.1"
-
-
-**Output**:
-
-The Astor's output is located in folder "./outputMutation". You can change it through command line argument '-out'. Inside the folder "/src/" Astor stores the source code of the solutions that it found.
-
-Folder “default” contains the original program, without any modification. It's a sanity check, it’s the output of spoon without applying any processor over the spoon model of the application under repair.
-
-Each folder "variant-x" is a valid solution to the repair problem (passes all tests). There is an command line argument `saveall` that allows you to save all variants that Astor generates, even they are not solution.
-For each variant x that is solution, Astor sumarizes all changes applied to variant x inside the file '/variant-x/patch.xml'.
-
-**jKali**
-
-For executing Astor in jKali mode, we use the option `-mode statement-remove`. jKali and jGenProg share the same arguments.
-
-    java  -cp astor.jar fr.inria.main.evolution.MainjGenProg -mode statement-remove -location <>......
+* [Getting Started](https://github.com/SpoonLabs/astor/blob/master/docs/getting-starting.md)
+* [How to extend Astor?](https://github.com/SpoonLabs/astor/blob/master/docs/extending_astor.md)
+* [List of Extension points](https://github.com/SpoonLabs/astor/blob/master/docs/extension-points.md)
 
 
-**Bug Example**
 
-The distribution contains a version of Apache commons Math with a real defect (reported in issue 280 https://issues.apache.org/jira/browse/MATH-280).
+Usage of Astor in education
+-------------------------------
 
-To run it using jGenProg, type: 
-
-     java -version # it is JDK 7?
-     cd examples/Math-issue-280
-     mvn test 
-     cd ../../
-     mvn compile
-     mvn  dependency:build-classpath | egrep -v "(^\[INFO\]|^\[WARNING\])" | tee /tmp/astor-classpath.txt
-     cat /tmp/astor-classpath.txt
-     java -cp $(cat /tmp/astor-classpath.txt):target/classes fr.inria.main.evolution.MainjGenProg -bug280
-
-or 
-
-    java fr.inria.main.evolution.MainjGenProg -bug280
+* Astor is being used in a [course by the Chair of Software Engineering (Prof. Dr. rer. nat. Lars Grunske) at Humboldt-Universität zu Berlin](https://www.informatik.hu-berlin.de/de/forschung/gebiete/se/teaching/ss2018/se2/se2)
+* Contact us or make a PR to add your course here :-)
 
 
-Contacts
---------
-matias.sebastian.martinez@usi.ch
-martin.monperrus@univ-lille1.fr
+Astor in the literature
+-----------------------
+
+* M. Wen, J. Chen, R. Wu, D. Hao, and S. Cheung. Context-aware patch generation for better automated program repair. In Proceedings of the 40th International Conference on Software Engineering (ICSE 2018).
+
+* X. Liu and H. Zhong, Mining stackoverflow for program repair, IEEE 25th International Conference on Software Analysis, Evolution and Reengineering (SANER), 2018.
+
+* Urli, S., Yu, Z., Seinturier, L., & Monperrus, M. How to design a program repair bot?: insights from the repairnator project. In Proceedings of the 40th International Conference on Software Engineering: Software Engineering in Practice (pp. 95-104). ACM. 2018.
+
+* K. Naitou, A. Tanikado, S. Matsumoto, Y. Higo, S. Kusumoto, H.  Kirinuki, T. Kurabayashi, H. Tanno, Haruto. Toward introducing automated program repair techniques to industrial software development. ICPC, 2018.
+
+* L. Azevedo, A. Dantas, C. Camilo-Junior. DroidBugs: An Android Benchmark for Automated Program Repair. arXiv preprint arXiv:1809.07353, 2018.
+
+* Ye, H., Martinez, M., & Monperrus, M. A Comprehensive Study of Automatic Program Repair on the QuixBugs Benchmark. arXiv preprint arXiv:1805.03454, 2018.
+
+* C. Trad, R. Abou Assi, W. Masri, F. Zaraket. CFAAR: Control Flow Alteration to Assist Repair. ArXiv preprint 	arXiv:1808.09229, 2018.
+
+* A. Tanikado, H. Yokoyama, M. Yamamoto, S. Sumi, Y. Higo, and S. Kusumoto. New strategies for selecting reuse candidates on automated program repair. In 2017 IEEE 41st Annual Computer Software and Appli- cations Conference (COMPSAC), volume 2, pages 266–267, July 2017.
+
+* Ming Wen, Junjie Chen, Rongxin Wu, Dan Hao, and Shing-Chi Cheung. An empirical analysis of the influence of fault space on search-based automated program repair.  Arxiv 1707.05172,  2017.
+
+* Liu, Yuefei. Understanding and generating patches for bugs introduced by third-party library upgrades. Master’s thesis, 2017.
+
+* Qi Xin and Steven P Reiss. Leveraging syntax-related code for automated program repair. In Proceedings of the 32nd IEEE/ACM International Conference on Automated Software Engineering (ASE), pages 660–670. IEEE, 2017.
+
+* Matias Martinez, Thomas Durieux, Romain Sommerard, Jifeng Xuan, and Martin Monperrus. Automatic repair of real bugs in java: A large-scale experiment on the defects4j dataset. Empirical Software Engineering, pages 1–29, 2016
+
+* Xuan Bach D Le, David Lo, and Claire Le Goues. History driven program repair. In Software Analysis, Evolution, and Reengineering (SANER), 2016 IEEE 23rd International Conference on, volume 1, pages 213–224. IEEE, 2016.
+
+* Yingfei Xiong, Jie Wang, Runfa Yan, Jiachen Zhang, Shi Han, Gang Huang, and Lu Zhang. Precise condition synthesis for program repair. In Proceedings of the 39th International Conference on Software Engineering, ICSE ’17, pages 416–426, Piscataway, NJ, USA, 2017. IEEE Press.
+
+* Yuan Yuan and Wolfgang Banzhaf. Arja: Automated repair of java programs via multi-objective genetic programming, 2017. Arviv 1712.07804.
+
+* Liushan Chen, Yu Pei, and Carlo A. Furia. Contract-based program repair without the contracts. In Proceedings of the 32Nd IEEE/ACM International Conference on Automated Software Engineering, ASE 2017, pages 637–647, Piscataway, NJ, USA, 2017. IEEE Press
+
+* Ripon K. Saha, Yingjun Lyu, Hiroaki Yoshida, and Mukul R. Prasad. Elixir: Effective object oriented program repair. In Proceedings of the 32Nd IEEE/ACM International Conference on Automated Software Engineering, ASE 2017, pages 648–659, Piscataway, NJ, USA, 2017. IEEE Press.
+
+* Manish Motwani, Sandhya Sankaranarayanan, Ren ́e Just, and Yuriy Brun. Do automated program repair techniques repair hard and important bugs? Empirical Software Engineering, pages 1–47, 2017.
+
+* H. Yokoyama, Y. Higo, and S. Kusumoto. Evaluating automated program repair using characteristics of defects. In 2017 8th International Workshop on Empirical Software Engineering in Practice (IWESEP), pages 47–52, March 2017.
+
+* Xinyuan Liu, Muhan Zeng, Yingfei Xiong, Lu Zhang, and Gang Huang. Identifying patch correctness in test-based automatic program repair. arXiv preprint arXiv:1706.09120, 2017.
+
+* Jiajun Jiang and Yingfei Xiong. Can defects be fixed with weak test suites? an analysis of 50 defects from defects4j. arXiv preprint arXiv:1705.04149, 2017.
+
+
+
+
+
+
+
